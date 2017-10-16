@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>line</title>
+</head>
+<body>
+    <canvas style="border:1px solid black" width="600" height="300" id="canvas"></canvas>
+    <input type="color" id="color">
+    <input type="range" id="lineWidth" value="3" min="1" max="10" step="1">
+    <button id="draw">画笔</button>
+    <button id="clear">清除</button>
+    <button id="revoked">撤销</button>
+    <button id="eraser">橡皮</button>
+    <button id="upLoadImg">上传图片</button>
+</body>
+</html>
+<script>
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d')
+    var clearCanvas = document.getElementById('clear');
+    var revoked = document.getElementById('revoked');
+    var eraser = document.getElementById('eraser');
+    var draw = document.getElementById('draw');
+    var imgArr = [];
+    var ball = {
+        x: 100,
+        y: 100,
+        radius:10,
+        lineWidth:1,
+        color: 'blue',
+        draw: function() {
+            ctx.lineTo(this.x,this.y);
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = this.lineWidth;
+            ctx.lineCap="round";
+            ctx.stroke();
+        }
+    };
+    draw.onclick = drawLine;
+
+
+    function copy (){
+        var img = ctx.getImageData(0,0,600,300);
+        imgArr.push(img);
+        // console.log(imgArr)
+    }
+
+
+    function drawLine () {
+        canvas.onmousedown = function(){
+            var iptVal = document.getElementById("color").value;
+            ball.color = iptVal;
+            var lineWidth = document.getElementById('lineWidth').value;
+            ball.lineWidth = lineWidth;
+            ctx.beginPath();
+            canvas.onmousemove = function(e){
+                ball.x = e.clientX;
+                ball.y = e.clientY;
+                ball.draw();
+            }
+            canvas.onmouseup = function () {
+                copy();
+                canvas.onmousemove = null;
+            }
+        }
+    }
+    
+   
+    clearCanvas.onclick = function () {
+        var width = canvas.width;
+        var height = canvas.height;
+        ctx.clearRect(0,0,width,height)
+    }
+
+    
+    eraser.onclick = function (){
+        canvas.onmousedown = function(){
+            var lineWidth = document.getElementById('lineWidth').value;
+            ctx.beginPath();
+            canvas.onmousemove = function(e){
+                var x = e.clientX;
+                var y = e.clientY;
+                ctx.clearRect(x,y,10,10);
+            }
+            canvas.onmouseup = function(){
+                copy();
+                canvas.onmousemove = null;
+            }
+        }
+    }
+    
+
+
+    revoked.onclick = function () {
+        if(imgArr.length > 1){
+            imgArr.pop();
+            // console.log(imgArr)
+            ctx.putImageData(imgArr[imgArr.length -1],0,0);
+        }else{
+            ctx.putImageData(imgArr[imgArr.length -1],0,0);
+        }
+        
+    }
+
+    upLoadImg.onclick = function () {
+        var image = new Image();
+        image.onload = function (){
+            ctx.drawImage(image,0,0,300,150);
+            drawLine();
+        }
+        image.src = "./01.jpg";
+
+
+        // Failed to execute 'getImageData' on 'CanvasRenderingContext2D': 
+        // The canvas has been tainted by cross-origin data.
+        // 原因：createGSCanvas()调用了getImageData函数，但是图片存储在本地文件，默认为没有域名，chrome浏览器判定为跨域才报错！
+        // 解决方法：将图片放置在服务器中，由服务器返回给客户端浏览器，遵循同源策略；
+    }
+
+   
+    drawLine();
+    copy(); 
+</script>
